@@ -33,8 +33,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright Chromium
-        run: bunx playwright install chromium --with-deps
+      - name: Install Playwright headless shell
+        # GitHub-hosted runners already ship Chromium, but Vitest's Playwright
+        # provider still needs a matching browser build. The headless shell is
+        # the smallest supported option for our headless CI run.
+        run: bunx playwright install chromium --with-deps --only-shell
 
       - name: Build WASM
         run: bun run build:wasm
