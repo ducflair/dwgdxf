@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DwgDxf</AssemblyName>
+    <RootNamespace>DwgDxf</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- WasmMainJSPath: the JS entry point included in the AppBundle -->
+    <WasmMainJSPath>main.mjs</WasmMainJSPath>
+    <!-- No Blazor, no ICU data (~4 MB saving) — DXF is ASCII/invariant -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Keep trimming off: ACadSharp is reflection-heavy -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <!--
+      AOT speeds up runtime at the cost of larger binary.
+      Off by default; set DWGDXF_AOT=true to enable via the build script.
+    -->
+    <RunAOTCompilation Condition="'$(DWGDXF_AOT)' == 'true'">true</RunAOTCompilation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ACadSharp" Version="3.4.9" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,20 @@
+# ── Build outputs ──────────────────────────────────────────────────────────
+dist/
+wasm/publish/
+wasm/bin/
+wasm/obj/
+
+# ── Test fixtures (downloaded at test time) ─────────────────────────────────
+tests/fixtures/*.dwg
+
+# ── Test output (converted DXF files — for local visualization only) ────────
+tests/output/
+
+# ── JS tooling ─────────────────────────────────────────────────────────────
+node_modules/
+bun.lockb
+
+# ── Editor / OS ────────────────────────────────────────────────────────────
+.DS_Store
+*.suo
+.vs/
