@@ -11,16 +11,17 @@
  */
 
 import { $ } from 'bun';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import pkg from './package.json';
 
 const root = import.meta.dir;
+const distDir = join(root, 'dist');
 
 // Injected into every bundle so cdn.ts can expose the package version
 // without requiring a JSON import at runtime (keeps the bundle lean).
 const versionDefine = { __DWGDXF_VERSION__: JSON.stringify(pkg.version) };
-const distWasm = join(root, 'dist', 'wasm');
+const distWasm = join(distDir, 'wasm');
 
 // Verify the WASM build has been run first.
 if (!existsSync(distWasm)) {
@@ -28,6 +29,13 @@ if (!existsSync(distWasm)) {
     '✗ dist/wasm/ not found.\n  Run `bun run build:wasm` before `build:ts`.',
   );
   process.exit(1);
+}
+
+// Keep the npm package lean by removing stale top-level dist artifacts while
+// preserving the WASM runtime assets produced by build:wasm.
+for (const entry of readdirSync(distDir)) {
+  if (entry === 'wasm') continue;
+  rmSync(join(distDir, entry), { recursive: true, force: true });
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +87,6 @@ if (!cjs.success) {
 // TypeScript declarations (tsc --emitDeclarationOnly)
 // ---------------------------------------------------------------------------
 console.log('▶ Generating TypeScript declarations…');
-await $`bun x tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist`.cwd(root);
+await $`bun x tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --rootDir src --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM src/index.ts`.cwd(root);
 
 console.log('✓ Build complete → dist/');
