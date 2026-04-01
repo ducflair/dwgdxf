@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
 
 concurrency:
@@ -12,8 +14,7 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    # Only run after CI passes (CI also triggers on push to main)
-    needs: []
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: write       # create GitHub releases and tags
       issues: write         # comment on issues
@@ -23,6 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           persist-credentials: false
 
