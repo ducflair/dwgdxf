@@ -22,6 +22,10 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build:wasm": "bash scripts/build-wasm.sh",
     "build:ts": "bun run build.ts",
