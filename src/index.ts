@@ -1,4 +1,5 @@
 export type { ConvertOptions } from './types.js';
+export { CDN_WASM_BASE, LOCAL_WASM_BASE } from './runtime.js';
 
 import { loadRuntime } from './runtime.js';
 import type { ConvertOptions } from './types.js';

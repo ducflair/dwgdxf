@@ -18,8 +18,8 @@ import pkg from './package.json';
 const root = import.meta.dir;
 const distDir = join(root, 'dist');
 
-// Injected into every bundle so cdn.ts can expose the package version
-// without requiring a JSON import at runtime (keeps the bundle lean).
+// Injected into every bundle so CDN_WASM_BASE in index.ts resolves to the
+// correct version string at build time without a JSON import at runtime.
 const versionDefine = { __DWGDXF_VERSION__: JSON.stringify(pkg.version) };
 const distWasm = join(distDir, 'wasm');
 
