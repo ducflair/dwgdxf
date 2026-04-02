@@ -36,10 +36,44 @@ if [[ ! -d "$APP_BUNDLE" ]] || [[ -z "$(ls -A "$APP_BUNDLE")" ]]; then
   exit 1
 fi
 
-echo "▶ Copying AppBundle → dist/wasm/"
+echo "▶ Copying runtime assets → dist/wasm/"
 rm -rf "$DIST_WASM"
 mkdir -p "$DIST_WASM"
-cp -r "$APP_BUNDLE/." "$DIST_WASM/"
+
+# ── Managed assemblies ────────────────────────────────────────────────────────
+# Copy every .dll from the publish output.  With PublishTrimmed=false the full
+# transitive closure of ACadSharp's references is present and all are required.
+cp "$APP_BUNDLE"/*.dll "$DIST_WASM/"
+
+# ── Compiled WebAssembly binary ───────────────────────────────────────────────
+# The static libs (*.a) are already linked inside this file — they are not
+# needed separately and must not be shipped.
+cp "$APP_BUNDLE/dotnet.native.wasm" "$DIST_WASM/"
+
+# ── JavaScript runtime layers ─────────────────────────────────────────────────
+for js in dotnet.js dotnet.native.js dotnet.runtime.js \
+           dotnet.es6.extpost.js dotnet.es6.lib.js dotnet.es6.pre.js; do
+  [[ -f "$APP_BUNDLE/$js" ]] && cp "$APP_BUNDLE/$js" "$DIST_WASM/"
+done
+# dotnet.globalization.js is only emitted when InvariantGlobalization is false.
+[[ -f "$APP_BUNDLE/dotnet.globalization.js" ]] && \
+  cp "$APP_BUNDLE/dotnet.globalization.js" "$DIST_WASM/"
+
+# ── Runtime configuration manifests ──────────────────────────────────────────
+for cfg in DwgDxf.deps.json DwgDxf.runtimeconfig.json; do
+  [[ -f "$APP_BUNDLE/$cfg" ]] && cp "$APP_BUNDLE/$cfg" "$DIST_WASM/"
+done
+
+# Intentionally excluded — present in publish output but not needed at runtime:
+#   *.a                  Emscripten/Mono static libs (already in dotnet.native.wasm)
+#   *.c / *.h            C source and header files
+#   *.rsp                Emscripten linker response files
+#   *.js.symbols         Profiling symbol tables
+#   *.js.map             Developer source maps (not needed by end users)
+#   *.d.ts               TypeScript host-API declarations
+#   icudt*.dat           ICU locale data (unused with InvariantGlobalization=true)
+#   package.json         Inner WASM package manifest
+#   segmentation-rules.json / wasm-props.json / wasm-config.h  build metadata
 
 # ---------------------------------------------------------------------------
 # Generate blazor.boot.json
