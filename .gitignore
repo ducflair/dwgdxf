@@ -3,12 +3,14 @@ dist/
 wasm/publish/
 wasm/bin/
 wasm/obj/
+target
 
 # ── Test fixtures (downloaded at test time) ─────────────────────────────────
-tests/fixtures/*.dwg
+tests/fixtures/
 
 # ── Test output (converted DXF files — for local visualization only) ────────
 tests/output/
+tests/output-pdf/
 
 # ── JS tooling ─────────────────────────────────────────────────────────────
 node_modules/
@@ -18,3 +20,5 @@ bun.lockb
 .DS_Store
 *.suo
 .vs/
+
+__pycache__

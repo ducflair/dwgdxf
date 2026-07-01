@@ -5,8 +5,8 @@
 /** Options accepted by {@link init} and {@link convertDwgToDxf}. */
 export interface ConvertOptions {
   /**
-   * Base URL of the directory containing the published .NET WASM assets
-   * (`dotnet.js`, `dotnet.native.*.wasm`, `blazor.boot.json`, `*.wasm`, …).
+   * Base URL of the directory containing the published WASM assets
+   * (`dwgdxf.js`, `dwgdxf_bg.wasm`).
    *
    * **Default** — assets are loaded from `./wasm/` relative to the JS bundle,
    * which is where the npm package ships them. Most bundler setups (Vite,
@@ -20,26 +20,11 @@ export interface ConvertOptions {
 }
 
 // ---------------------------------------------------------------------------
-// Internal types for the .NET WASM runtime
+// Internal types for the Rust WASM runtime
 // ---------------------------------------------------------------------------
 
-/** Subset of the builder returned by dotnet.js that we actually use. */
-export interface DotnetHostBuilder {
-  withDiagnosticTracing(enabled: boolean): DotnetHostBuilder;
-  withModuleConfig(config: Record<string, unknown>): DotnetHostBuilder;
-  create(): Promise<DotnetRuntime>;
+/** Shape of the exports produced by dwgdxf wasm-pack bindings. */
+export interface WasmModule {
+  convertDwgToDxf(dwg: Uint8Array): Uint8Array;
 }
 
-export interface DotnetRuntime {
-  getConfig(): { mainAssemblyName?: string };
-  getAssemblyExports(assemblyName: string): Promise<AssemblyExports>;
-}
-
-/** Shape of the exports produced by DwgDxf.dll's [JSExport] bindings. */
-export interface AssemblyExports {
-  DwgDxf: {
-    Converter: {
-      ConvertDwgToDxf(dwg: Uint8Array): Uint8Array;
-    };
-  };
-}

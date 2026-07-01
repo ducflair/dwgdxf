@@ -26,6 +26,6 @@ TRADEMARK NOTICE
 
 DWG and DXF are trademarks or registered trademarks of Autodesk, Inc.
 This software is not affiliated with, sponsored by, or endorsed by Autodesk, Inc.
-The DWG file format is read using ACadSharp (MIT license), an independent
+The DWG file format is read using acadrust (MIT license), an independent
 open-source implementation of the format. No Autodesk proprietary code or SDK
 is used in this project.

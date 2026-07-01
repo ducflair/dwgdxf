@@ -1,0 +1,12 @@
+[project]
+name = "dwgdxf-tests"
+version = "1.0.0"
+description = "Test suite for dwgdxf client-side DWG to DXF library"
+requires-python = ">=3.10"
+dependencies = [
+    "wasmtime>=21.0.0",
+    "pytest>=8.0.0",
+    "ezdxf>=1.4.0",
+    "PyMuPDF>=1.24.0",
+    "matplotlib>=3.8.0",
+]
