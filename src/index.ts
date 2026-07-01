@@ -6,9 +6,9 @@ import type { ConvertOptions } from './types.js';
 
 /**
  * Converts a DWG binary buffer to a DXF byte array entirely in the browser
- * using ACadSharp compiled to WebAssembly.
+ * using acadrust compiled to WebAssembly.
  *
- * The .NET runtime is initialised lazily on the first call and reused
+ * The Rust WASM runtime is initialised lazily on the first call and reused
  * for all subsequent calls — warm conversions are significantly faster.
  *
  * @param dwg  The DWG file contents as `Uint8Array` or `ArrayBuffer`.
@@ -34,14 +34,12 @@ export async function convertDwgToDxf(
 ): Promise<Uint8Array> {
   const exports = await loadRuntime(options);
   const input = dwg instanceof Uint8Array ? dwg : new Uint8Array(dwg);
-  // ConvertDwgToDxf returns a Uint8Array view into WASM-managed memory.
-  // We copy it immediately before the GC can reclaim the underlying buffer.
-  const result = exports.DwgDxf.Converter.ConvertDwgToDxf(input);
-  return new Uint8Array(result);
+  const result = exports.convertDwgToDxf(input);
+  return result;
 }
 
 /**
- * Pre-initialises the .NET WASM runtime without performing a conversion.
+ * Pre-initialises the Rust WASM runtime without performing a conversion.
  * Call this during application startup to eliminate cold-start latency on
  * the first {@link convertDwgToDxf} invocation.
  *

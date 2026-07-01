@@ -1,17 +1,20 @@
 {
   "name": "dwgdxf",
   "version": "0.0.0-development",
-  "description": "Client-side DWG→DXF converter using ACadSharp compiled to WebAssembly",
+  "description": "Client-side DWG→DXF converter using acadrust compiled to WebAssembly",
   "license": "MIT",
   "author": "Jorge Soares",
   "type": "module",
-  "keywords": ["dwg", "dxf", "cad", "acad", "wasm", "webassembly", "acad-sharp", "converter"],
+  "keywords": ["dwg", "dxf", "cad", "acad", "wasm", "webassembly", "acadrust", "rust", "converter"],
   "bugs": {
     "url": "https://github.com/ducflair/dwgdxf/issues"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/ducflair/dwgdxf"
+  },
+  "bin": {
+    "dwgdxf": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -31,7 +34,7 @@
     "provenance": true
   },
   "scripts": {
-    "build:wasm": "bash scripts/build-wasm.sh",
+    "build:wasm": "wasm-pack build wasm --target web --out-dir ../dist/wasm",
     "build:ts": "bun run build.ts",
     "build": "bun run build:wasm && bun run build:ts",
     "test": "vitest run",
@@ -48,8 +51,6 @@
     "@semantic-release/npm": "^12.0.1",
     "@semantic-release/release-notes-generator": "^14.0.1",
     "@types/node": "^25.5.0",
-    "@vitest/browser": "^3.0.0",
-    "playwright": "^1.50.0",
     "semantic-release": "^24.1.2",
     "typescript": "^5.7.3",
     "vitest": "^3.0.0"

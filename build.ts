@@ -11,7 +11,7 @@
  */
 
 import { $ } from 'bun';
-import { existsSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import pkg from './package.json';
 
@@ -46,8 +46,8 @@ const esm = await Bun.build({
   outdir: join(root, 'dist'),
   format: 'esm',
   target: 'browser',
-  // dotnet.js and WASM files are runtime-fetched — never bundle them.
-  external: ['*.wasm', 'dotnet.js', 'dotnet.native.*', 'dotnet.runtime.*'],
+  // WASM and loader files are runtime-fetched — never bundle them.
+  external: ['*.wasm', 'dwgdxf.js', 'node:fs', 'node:path', 'node:url'],
   naming: {
     entry: 'index.js',
   },
@@ -69,7 +69,7 @@ const cjs = await Bun.build({
   outdir: join(root, 'dist'),
   format: 'cjs',
   target: 'browser',
-  external: ['*.wasm', 'dotnet.js', 'dotnet.native.*', 'dotnet.runtime.*'],
+  external: ['*.wasm', 'dwgdxf.js', 'node:fs', 'node:path', 'node:url'],
   naming: {
     entry: 'index.cjs',
   },
@@ -84,9 +84,38 @@ if (!cjs.success) {
 }
 
 // ---------------------------------------------------------------------------
+// CLI bundle
+// ---------------------------------------------------------------------------
+const cli = await Bun.build({
+  entrypoints: [join(root, 'src/cli.ts')],
+  outdir: join(root, 'dist'),
+  format: 'esm',
+  target: 'node',
+  external: ['./index.js', 'node:*', '*.wasm', 'dwgdxf.js'],
+  naming: {
+    entry: 'cli.js',
+  },
+  sourcemap: 'external',
+  minify: true,
+  define: versionDefine,
+});
+
+if (!cli.success) {
+  console.error('✗ CLI build failed:', cli.logs);
+  process.exit(1);
+}
+
+// Prepend shebang and make it executable
+const cliPath = join(distDir, 'cli.js');
+const cliContent = readFileSync(cliPath, 'utf8');
+writeFileSync(cliPath, `#!/usr/bin/env node\n${cliContent}`);
+chmodSync(cliPath, '755');
+
+// ---------------------------------------------------------------------------
 // TypeScript declarations (tsc --emitDeclarationOnly)
 // ---------------------------------------------------------------------------
 console.log('▶ Generating TypeScript declarations…');
 await $`bun x tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --rootDir src --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM src/index.ts`.cwd(root);
 
 console.log('✓ Build complete → dist/');
+

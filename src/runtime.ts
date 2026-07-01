@@ -1,4 +1,4 @@
-import type { AssemblyExports, ConvertOptions, DotnetHostBuilder } from './types.js';
+import type { ConvertOptions, WasmModule } from './types.js';
 
 // Injected at bundle-time by Bun's `define` option (see build.ts).
 // Falls back to 'latest' when the source is imported directly (e.g. in tests).
@@ -22,8 +22,8 @@ export const LOCAL_WASM_BASE = new URL('./wasm', import.meta.url).href;
 /**
  * jsDelivr CDN base URL for this exact package version's WASM assets.
  *
- * Opt-in alternative to the local default. The browser fetches all `.wasm`,
- * `.dll`, and loader files from jsDelivr's edge network — nothing is copied
+ * Opt-in alternative to the local default. The browser fetches all `.wasm`
+ * and loader files from jsDelivr's edge network — nothing is copied
  * into the user's bundle or deployment.
  *
  * @example
@@ -36,47 +36,51 @@ export const CDN_WASM_BASE =
 const DEFAULT_WASM_BASE = LOCAL_WASM_BASE;
 
 // Global singleton — the runtime is expensive to initialise; load it once.
-let _runtimePromise: Promise<AssemblyExports> | null = null;
+let _runtimePromise: Promise<WasmModule> | null = null;
 
 /**
- * Initialises (or returns the already-initialised) .NET WASM runtime.
+ * Initialises (or returns the already-initialised) Rust WASM runtime.
  * Safe to call multiple times — subsequent calls are instant no-ops.
  */
-export function loadRuntime(options?: ConvertOptions): Promise<AssemblyExports> {
+export function loadRuntime(options?: ConvertOptions): Promise<WasmModule> {
   if (!_runtimePromise) {
     _runtimePromise = _boot(options?.wasmBase ?? DEFAULT_WASM_BASE);
   }
   return _runtimePromise;
 }
 
-async function _boot(wasmBase: string): Promise<AssemblyExports> {
+async function _boot(wasmBase: string): Promise<WasmModule> {
   // Trim trailing slash for consistent path joining.
   const base = wasmBase.replace(/\/+$/, '');
 
-  // Use `new Function` to create an indirect dynamic import.
-  // This prevents bundlers from attempting to statically analyse or inline
-  // the dotnet.js module, which is a runtime-loaded binary asset.
-  const indirectImport = new Function('url', 'return import(url)') as (
-    url: string,
-  ) => Promise<{ dotnet: DotnetHostBuilder }>;
+  const wasmModule = await import(`${base}/dwgdxf.js`);
 
-  const { dotnet } = await indirectImport(`${base}/dotnet.js`);
+  // Detect if we are in a Node.js/Bun filesystem environment where fetch()
+  // on file:// URLs fails.
+  const isFileURL = base.startsWith('file:') || (!base.startsWith('http:') && !base.startsWith('https:') && typeof window === 'undefined');
 
-  const runtime = await dotnet
-    .withDiagnosticTracing(false)
-    .withModuleConfig({
-      // Tell the Emscripten / .NET runtime layer where to locate WASM assets
-      // relative to the dotnet.js script.  This is equivalent to the
-      // `locateFile` callback used in older .NET WASM builds.
-      locateFile: (path: string) => `${base}/${path}`,
-    })
-    .create();
+  if (isFileURL && typeof process !== 'undefined') {
+    // Dynamic imports of Node.js modules to avoid bundler issues
+    const fsName = ['node', 'fs'].join(':');
+    const pathName = ['node', 'path'].join(':');
+    const urlName = ['node', 'url'].join(':');
+    const fs = await import(fsName);
+    const path = await import(pathName);
+    const { fileURLToPath } = await import(urlName);
 
-  const config = runtime.getConfig();
-  const assemblyName = config.mainAssemblyName ?? 'DwgDxf';
-  const exports = await runtime.getAssemblyExports(assemblyName);
+    let wasmDir = base;
+    if (wasmDir.startsWith('file:')) {
+      wasmDir = fileURLToPath(wasmDir);
+    }
+    const fullWasmPath = path.join(wasmDir, 'dwgdxf_bg.wasm');
+    const wasmBuffer = fs.readFileSync(fullWasmPath);
+    await wasmModule.default({ module_or_path: new WebAssembly.Module(wasmBuffer) });
+  } else {
+    // Browser environment / standard URL
+    await wasmModule.default({ module_or_path: `${base}/dwgdxf_bg.wasm` });
+  }
 
-  return exports as AssemblyExports;
+  return wasmModule as WasmModule;
 }
 
 /** Reset the singleton — useful in unit tests that mock the runtime. */

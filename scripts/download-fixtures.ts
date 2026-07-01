@@ -1,7 +1,7 @@
 /**
  * scripts/download-fixtures.ts
  *
- * Downloads the ACadSharp sample DWG files used by the Vitest browser tests.
+ * Downloads sample DWG files used by the Vitest browser tests.
  * Run with:  bun scripts/download-fixtures.ts
  *
  * Files are cached in tests/fixtures/ — already in .gitignore.
