@@ -43,7 +43,7 @@
     "access": "public"
   },
   "scripts": {
-    "build:wasm": "wasm-pack build wasm --target web --out-dir ../dist/wasm",
+    "build:wasm": "wasm-pack build wasm --target web --out-dir ../dist/wasm && rm -f dist/wasm/package.json dist/wasm/.gitignore",
     "build:ts": "bun run build.ts",
     "build": "bun run build:wasm && bun run build:ts",
     "test": "vitest run",
